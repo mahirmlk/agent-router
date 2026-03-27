@@ -115,7 +115,7 @@ OPENROUTER_API_KEY=your-openrouter-api-key
 # OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
 # Use the backend origin or /api/chat. Do not point this at /chat.
 # NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
-# FASTAPI_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+# FASTAPI_CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,https://agent-router-rust.vercel.app
 ```
 
 You can copy from `.env.example`.
