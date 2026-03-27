@@ -5,7 +5,7 @@ from typing import TypedDict
 
 from ..config import Settings
 from ..schemas import ChatAttachment, ChatRequest
-from ..services.openrouter import call_openrouter
+from ..services.openrouter import call_model_api
 
 
 DEFAULT_SIMPLE_MODEL_MAX_TOKENS = 768
@@ -17,6 +17,7 @@ class ChatWorkflowState(TypedDict, total=False):
   client_origin: str | None
   api_key: str
   base_url: str
+  provider_protocol: str
   using_custom_key: bool
   selected_model: str
   provider_label: str
@@ -94,6 +95,7 @@ def _prepare_request(state: ChatWorkflowState) -> ChatWorkflowState:
   provider = request.selected_provider
   custom_api_key = ((provider.api_key if provider else "") or "").strip()
   custom_base_url = ((provider.base_url if provider else "") or "").strip()
+  provider_protocol = ((provider.protocol if provider else "") or "openai").strip().lower() or "openai"
   using_custom_key = bool(custom_api_key)
   selected_model = (request.selected_model or settings.default_model).strip() or settings.default_model
   generation_settings = _resolve_generation_settings(
@@ -106,6 +108,7 @@ def _prepare_request(state: ChatWorkflowState) -> ChatWorkflowState:
   return {
     "api_key": custom_api_key or state["api_key"],
     "base_url": custom_base_url or state["base_url"],
+    "provider_protocol": provider_protocol,
     "using_custom_key": using_custom_key,
     "selected_model": selected_model,
     "provider_label": ((provider.label if provider else "") or "OpenRouter").strip(),
@@ -131,7 +134,8 @@ def _prepare_request(state: ChatWorkflowState) -> ChatWorkflowState:
 
 
 async def _invoke_model(state: ChatWorkflowState) -> ChatWorkflowState:
-  result = await call_openrouter(
+  result = await call_model_api(
+    protocol=str(state.get("provider_protocol") or "openai"),
     api_key=state["api_key"],
     base_url=state["base_url"],
     model=state["selected_model"],
