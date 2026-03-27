@@ -34,6 +34,7 @@ export interface BackendChatResponse {
 }
 
 const LOCAL_BACKEND_API_URL = "http://127.0.0.1:8000";
+const CHAT_API_PATH = "/api/chat";
 
 function getConfiguredBackendApiUrl(): string {
   return (
@@ -59,10 +60,46 @@ function getBackendApiUrl(): string {
   );
 }
 
-function toBackendUrl(pathname: string): string {
-  const baseUrl = getBackendApiUrl().replace(/\/$/, "");
-  const path = pathname.startsWith("/") ? pathname : `/${pathname}`;
-  return `${baseUrl}${path}`;
+function resolveConfiguredChatUrl(configuredUrl: string): string {
+  const normalizedUrl = configuredUrl.trim();
+
+  try {
+    const parsedUrl = new URL(normalizedUrl);
+    const normalizedPath = parsedUrl.pathname.replace(/\/+$/, "") || "/";
+
+    if (
+      normalizedPath === "/" ||
+      normalizedPath === "/api" ||
+      normalizedPath === "/chat"
+    ) {
+      parsedUrl.pathname = CHAT_API_PATH;
+      return parsedUrl.toString();
+    }
+
+    if (normalizedPath === CHAT_API_PATH) {
+      parsedUrl.pathname = CHAT_API_PATH;
+      return parsedUrl.toString();
+    }
+
+    parsedUrl.pathname = `${normalizedPath}${CHAT_API_PATH}`;
+    return parsedUrl.toString();
+  } catch {
+    const baseUrl = normalizedUrl.replace(/\/+$/, "");
+
+    if (
+      baseUrl.endsWith(CHAT_API_PATH) ||
+      baseUrl.endsWith("/chat") ||
+      baseUrl.endsWith("/api")
+    ) {
+      return `${baseUrl.replace(/(\/chat|\/api|\/api\/chat)$/, "")}${CHAT_API_PATH}`;
+    }
+
+    return `${baseUrl}${CHAT_API_PATH}`;
+  }
+}
+
+function getChatApiUrl(): string {
+  return resolveConfiguredChatUrl(getBackendApiUrl());
 }
 
 async function parseBackendResponse(response: Response): Promise<unknown> {
@@ -82,9 +119,10 @@ export async function sendChatRequest(
   clientId: string,
 ): Promise<BackendChatResponse> {
   let response: Response;
+  const chatApiUrl = getChatApiUrl();
 
   try {
-    response = await fetch(toBackendUrl("/api/chat"), {
+    response = await fetch(chatApiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -94,10 +132,10 @@ export async function sendChatRequest(
     });
   } catch (error) {
     if (error instanceof TypeError) {
-      const backendApiUrl = getConfiguredBackendApiUrl() || LOCAL_BACKEND_API_URL;
+      const backendApiUrl = getConfiguredBackendApiUrl() || chatApiUrl;
 
       throw new Error(
-        `Unable to reach the backend at ${backendApiUrl}. Start it with "npm run dev" or "npm run backend:dev".`,
+        `Unable to reach the backend at ${backendApiUrl}. The frontend expects the chat endpoint at ${chatApiUrl}.`,
       );
     }
 
