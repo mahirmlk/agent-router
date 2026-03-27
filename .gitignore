@@ -1,4 +1,5 @@
 .env
+.env.local
 __pycache__/
 *.pyc
 .venv/
@@ -6,3 +7,4 @@ backend/.venv/
 logs/
 dashboard/.next/
 dashboard/node_modules/
+dashboard/.env.local
