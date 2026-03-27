@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+import json
 import os
 
 
@@ -90,10 +91,34 @@ def _get_env_value(name: str, fallback_name: str | None = None) -> str:
 
 
 def _parse_origins(raw_value: str) -> tuple[str, ...]:
+  normalized_value = raw_value.strip()
+
+  if not normalized_value:
+    return DEFAULT_CORS_ORIGINS
+
+  if normalized_value.startswith("["):
+    try:
+      parsed_value = json.loads(normalized_value)
+    except json.JSONDecodeError:
+      parsed_value = None
+    else:
+      if isinstance(parsed_value, str):
+        origin = parsed_value.strip()
+        return (origin,) if origin else DEFAULT_CORS_ORIGINS
+
+      if isinstance(parsed_value, list):
+        origins = tuple(
+          str(item).strip()
+          for item in parsed_value
+          if str(item).strip()
+        )
+
+        return origins or DEFAULT_CORS_ORIGINS
+
   origins = tuple(
-    item.strip()
-    for item in raw_value.split(",")
-    if item.strip()
+    item.strip().strip("\"'")
+    for item in normalized_value.split(",")
+    if item.strip().strip("\"'")
   )
 
   return origins or DEFAULT_CORS_ORIGINS
