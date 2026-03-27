@@ -25,6 +25,7 @@ import {
 import {
   loadChatProviderSelection,
   loadProviderConfigs,
+  providerRequiresApiKey,
   saveChatProviderSelection,
   type ProviderConfig,
   type ProviderId,
@@ -129,9 +130,15 @@ function humanizeModelId(modelId: string): string {
 
   return tail
     .replace(/claude/gi, "Claude")
+    .replace(/qwen/gi, "Qwen")
     .replace(/gpt/gi, "GPT")
+    .replace(/grok/gi, "Grok")
+    .replace(/deepseek/gi, "DeepSeek")
     .replace(/llama/gi, "Llama")
     .replace(/gemma/gi, "Gemma")
+    .replace(/gemini/gi, "Gemini")
+    .replace(/mistral/gi, "Mistral")
+    .replace(/ministral/gi, "Ministral")
     .replace(/mixtral/gi, "Mixtral")
     .replace(/-/g, " ")
     .replace(/\b\w/g, (value) => value.toUpperCase());
@@ -325,7 +332,10 @@ export default function ChatWorkspace() {
         option.providerId === selectedProviderId && option.modelId === selectedModelId,
     ) ?? availableModels[0];
 
-  const selectedProviderReady = Boolean(activeProvider);
+  const selectedProviderReady = Boolean(
+    activeProvider &&
+      (!providerRequiresApiKey(activeProvider) || activeProvider.apiKey.trim()),
+  );
 
   const previewPreset = getPresetFromEffort(effort);
   const routePreview = predictRoute(input || "Route this prompt", previewPreset);
@@ -614,7 +624,11 @@ export default function ChatWorkspace() {
                 {activeProvider?.label ?? "OpenRouter"}
               </p>
               <p className="mt-1 text-sm text-zinc-500">
-                {selectedProviderReady ? "Ready" : "API key required"}
+                {selectedProviderReady
+                  ? providerRequiresApiKey(activeProvider ?? { id: "openrouter" })
+                    ? "Ready"
+                    : "Shared server key or your key"
+                  : "API key required"}
               </p>
             </div>
           </div>

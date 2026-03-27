@@ -5,6 +5,7 @@ import AppHeader from "@/components/AppHeader";
 import {
   defaultProviderConfigs,
   loadProviderConfigs,
+  providerRequiresApiKey,
   saveProviderConfigs,
   type ProviderConfig,
 } from "@/lib/provider-storage";
@@ -62,7 +63,7 @@ export default function ProvidersPage() {
       <AppHeader
         eyebrow="Providers"
         title="Manage backend provider settings."
-        description="Store an optional browser-local OpenRouter key, set the base URL, and control which model ids the Next.js UI sends to FastAPI."
+        description="Configure OpenRouter, OpenAI, Anthropic, Qwen, and other provider connections in browser-local storage. The dashboard forwards the selected provider config to FastAPI only when you send a chat."
         actions={
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={handleReset} className="pill">
@@ -108,7 +109,9 @@ export default function ProvidersPage() {
                       {provider.protocol}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-slate-500">{provider.baseUrl}</p>
+                  <p className="mt-2 text-sm text-slate-500">
+                    {provider.baseUrl || "Set the provider base URL before enabling this route."}
+                  </p>
                 </div>
 
                 <label className="inline-flex items-center gap-3 rounded-full border border-white/84 bg-white/80 px-4 py-2 text-sm font-medium text-slate-700">
@@ -155,6 +158,37 @@ export default function ProvidersPage() {
                 </label>
               </div>
 
+              <div className="mt-4 grid gap-4 lg:grid-cols-2">
+                <label className="space-y-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                    Protocol
+                  </span>
+                  <select
+                    value={provider.protocol}
+                    onChange={(event) =>
+                      updateProvider(provider.id, {
+                        protocol: event.target.value as ProviderConfig["protocol"],
+                      })
+                    }
+                    className="w-full rounded-[22px] border border-white/86 bg-white/82 px-4 py-3 text-sm text-slate-700 outline-none"
+                  >
+                    <option value="openai">OpenAI-compatible</option>
+                    <option value="anthropic">Anthropic-compatible</option>
+                  </select>
+                </label>
+
+                <div className="space-y-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                    Auth
+                  </span>
+                  <div className="rounded-[22px] border border-white/86 bg-white/82 px-4 py-3 text-sm text-slate-600">
+                    {providerRequiresApiKey(provider)
+                      ? "Requires your own API key."
+                      : "Can use the shared server key or your own key."}
+                  </div>
+                </div>
+              </div>
+
               <label className="mt-4 block space-y-2">
                 <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
                   Models
@@ -182,7 +216,8 @@ export default function ProvidersPage() {
             </div>
             <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
               <p>Keys and model lists stay in local browser storage.</p>
-              <p>FastAPI uses the repo OpenRouter key by default and falls back to your browser-local key when provided.</p>
+              <p>OpenRouter can use the shared server key or your own key. Other provider entries expect your own API key.</p>
+              <p>Model ids vary by account and vendor. Edit the defaults here if your provider uses different model names.</p>
               {savedAt ? (
                 <p className="rounded-[20px] border border-white/84 bg-white/76 px-4 py-3 font-medium text-slate-700">
                   Saved at {savedAt}
