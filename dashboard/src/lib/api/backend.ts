@@ -33,11 +33,26 @@ export interface BackendChatResponse {
   metadata?: Partial<MessageMetadata>;
 }
 
-const DEFAULT_BACKEND_API_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || "http://127.0.0.1:8000";
+const LOCAL_BACKEND_API_URL = "http://127.0.0.1:8000";
+
+function getBackendApiUrl(): string {
+  const configuredUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+
+  if (configuredUrl) {
+    return configuredUrl;
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    return LOCAL_BACKEND_API_URL;
+  }
+
+  throw new Error(
+    "Backend URL is not configured for this deployment. Set NEXT_PUBLIC_API_BASE_URL to your backend URL.",
+  );
+}
 
 function toBackendUrl(pathname: string): string {
-  const baseUrl = DEFAULT_BACKEND_API_URL.replace(/\/$/, "");
+  const baseUrl = getBackendApiUrl().replace(/\/$/, "");
   const path = pathname.startsWith("/") ? pathname : `/${pathname}`;
   return `${baseUrl}${path}`;
 }
@@ -71,8 +86,11 @@ export async function sendChatRequest(
     });
   } catch (error) {
     if (error instanceof TypeError) {
+      const backendApiUrl =
+        process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || LOCAL_BACKEND_API_URL;
+
       throw new Error(
-        `Unable to reach the backend at ${DEFAULT_BACKEND_API_URL}. Start it with "npm run dev" or "npm run backend:dev".`,
+        `Unable to reach the backend at ${backendApiUrl}. Start it with "npm run dev" or "npm run backend:dev".`,
       );
     }
 
