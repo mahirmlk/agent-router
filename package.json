@@ -1,0 +1,14 @@
+{
+  "name": "agent-router",
+  "private": true,
+  "scripts": {
+    "dev": "powershell -ExecutionPolicy Bypass -File scripts/dev.ps1",
+    "build": "npm --prefix dashboard run build",
+    "start": "powershell -ExecutionPolicy Bypass -File scripts/start-app.ps1",
+    "backend:dev": "powershell -ExecutionPolicy Bypass -File scripts/backend-dev.ps1",
+    "backend:start": "powershell -ExecutionPolicy Bypass -File scripts/backend-start.ps1",
+    "dashboard:dev": "npm --prefix dashboard run dev --",
+    "dashboard:build": "npm --prefix dashboard run build",
+    "dashboard:start": "npm --prefix dashboard run start"
+  }
+}
